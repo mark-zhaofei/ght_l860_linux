@@ -1,1 +1,0 @@
-cmd_/home/ght/zhaofei/work-code/IOSM/driver/IOSM-7.06.01/imc_ipc.ko := ld -r -m elf_x86_64 -z max-page-size=0x200000 -T ./scripts/module-common.lds --build-id  -o /home/ght/zhaofei/work-code/IOSM/driver/IOSM-7.06.01/imc_ipc.ko /home/ght/zhaofei/work-code/IOSM/driver/IOSM-7.06.01/imc_ipc.o /home/ght/zhaofei/work-code/IOSM/driver/IOSM-7.06.01/imc_ipc.mod.o ;  true
