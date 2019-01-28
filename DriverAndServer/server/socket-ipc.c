@@ -1,6 +1,7 @@
 
 #include "socket-ipc.h"
-
+//for syslog debug
+#include "logs.h"
 
 clint_struct CLINT_INFO[SIZE];
 
@@ -14,7 +15,7 @@ int create_server_proc(const char* socket_path)
 		int listenfd, connfd, size;
 
 		if ((listenfd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-				perror("socket error");
+				LOGE("socket error");
 				exit(1);
 		}
 
@@ -30,10 +31,10 @@ int create_server_proc(const char* socket_path)
 		size = offsetof(struct sockaddr_un, sun_path) + strlen(serun.sun_path);
 		unlink(socket_path);
 		if (bind(listenfd, (struct sockaddr *)&serun, size) < 0) {
-				perror("bind error");
+				LOGE("bind error");
 				exit(1);
 		}
-		printf("UNIX domain socket bound\n");
+		LOGI("UNIX domain socket bound\n");
 
     listen(listenfd,LISTENQ);
 
@@ -48,7 +49,7 @@ int accept_client_proc(int srvfd)
 		struct sockaddr_un  cliun;
 		cliun_len = sizeof(cliun);
 
-    printf("accpet clint proc is called.\n");
+    LOGI("accpet clint proc is called.\n");
 
 ACCEPT:
 		clifd = accept(srvfd, (struct sockaddr *)&cliun, &cliun_len);
@@ -58,13 +59,12 @@ ACCEPT:
         if (errno == EINTR) {
             goto ACCEPT;
         } else {
-            fprintf(stderr, "accept fail,error:%s\n", strerror(errno));
+            LOGE("accept fail,error:%s\n", strerror(errno));
             return -1;
         }
     }
 
-    fprintf(stdout, "accept a new client: %d:%s\n",
-            clifd,cliun.sun_path);
+    LOGI("accept a new client: %d:%s\n",clifd,cliun.sun_path);
 
     //将新的连接描述符添加到数组中
     int i = 0;
@@ -79,7 +79,7 @@ ACCEPT:
     }
 
     if (i == SIZE) {
-        fprintf(stderr,"too many clients.\n");
+        LOGE("too many clients.\n");
         return -1;
     }
 }
@@ -90,8 +90,8 @@ int server_broadcast(char* message)
     int i ;
     for (i=0;i < SIZE; i++) {
 			if(s_srv_ctx->clifds[i]>0){
-				printf("server broadcast message is :%s\n", message);
-				printf("clint id is:%d  clint_path is :%s\n", s_srv_ctx->clifds[i],CLINT_INFO[i].path);
+				LOGI("server broadcast message is :%s\n", message);
+				LOGI("clint id is:%d  clint_path is :%s\n", s_srv_ctx->clifds[i],CLINT_INFO[i].path);
 				write(s_srv_ctx->clifds[i], message, strlen(message) +1);
 			}
 
@@ -103,24 +103,24 @@ int server_broadcast(char* message)
 int handle_client_msg(int fd, char *buf)
 {
     //assert(buf);
-    printf("recv buf is :%s\n", buf);
+    LOGI("recv buf is :%s\n", buf);
 		if(strcmp(buf,MDM_POWER_ON) == 0){
-			printf("will call :MDM_POWER_ON\n");
+			LOGI("will call :MDM_POWER_ON\n");
 		}
 		else if(strcmp(buf,MDM_POWER_OFF) == 0){
-			printf("will call :MDM_POWER_OFF\n");
+			LOGI("will call :MDM_POWER_OFF\n");
 		}
 		else if(strcmp(buf,MDM_WARM_RESET) == 0){
-			printf("will call :MDM_WARM_RESET\n");
+			LOGI("will call :MDM_WARM_RESET\n");
 		}
 		else if(strcmp(buf,MDM_COLD_RESET) == 0){
-			printf("will call :MDM_COLD_RESET\n");
+			LOGI("will call :MDM_COLD_RESET\n");
 		}
 		else if(strcmp(buf,MDM_STATUS_QUERY) == 0){
-			printf("will call :MDM_STATUS_QUERY\n");
+			LOGI("will call :MDM_STATUS_QUERY\n");
 		}
 		else{
-			printf("Error it's a unsupported cmd : %s\n",buf);
+			LOGI("Error it's a unsupported cmd : %s\n",buf);
 		}
 		write(fd, "OK", 3);
     //write(fd, buf, strlen(buf) +1);
@@ -189,11 +189,11 @@ void * handle_client_proc(void *args)
         /*开始轮询接收处理服务端和客户端套接字*/
         retval = select(s_srv_ctx->maxfd + 1, readfds, NULL, NULL, &tv);
         if (retval == -1) {
-            fprintf(stderr, "select error:%s.\n", strerror(errno));
+            LOGE( "select error:%s.\n", strerror(errno));
             break;
         }
         if (retval == 0) {
-            fprintf(stdout, "select is timeout.\n");
+            LOGE("select is timeout.\n");
             continue;
         }
         if (FD_ISSET(srvfd, readfds)) {
@@ -236,9 +236,9 @@ void * test(void * arg)
 {
 	while(1)
 	{
-		printf("main test 1\n");
+		LOGI("main test 1\n");
 		sleep(1);
-		printf("main test 2\n");
+		LOGI("main test 2\n");
 	}
 
 }
