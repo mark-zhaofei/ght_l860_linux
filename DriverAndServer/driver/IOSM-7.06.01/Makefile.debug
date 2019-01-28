@@ -1,0 +1,64 @@
+GZ_NAME := imc_ipc_`modinfo --field version imc_ipc.ko`.tar.gz
+
+debugfs:
+	@echo ">>> start building internal NON-DEBUG IMC IPC driver <<<"
+	@echo $(VERSION)
+	@$(MAKE) -C $(KDIR) M=$$PWD
+	@echo ">>> end building internal NON-DEBUG IMC IPC driver <<<\n"
+
+debug_all:
+	@echo ">>> start building internal DEBUG IMC IPC driver <<<"
+	@echo $(VERSION)
+	@$(MAKE) -C $(KDIR) M=$$PWD CCFLAGS_ADD="-DDEBUG -DIPC_DEBUG"
+	@echo ">>> end building internal DEBUG IMC IPC driver <<<\n"
+
+build_release_zip: all
+#       the driver module should be built to determine
+#       the archive name from module version.
+	@echo "\n>>> packing sources to $(GZ_NAME) <<<\n"
+#	in the makefile remove the inclusion of debug makefile
+	@cp Makefile Makefile.temp
+	@sed -i '/Makefile.debug/d' Makefile.temp
+# 	Create release tar file
+	@tar --transform 's/Makefile.temp/Makefile/' -zcf $(GZ_NAME) \
+		--gzip --hard-dereference --owner=0 --group=0 \
+		$(imc_ipc-headers) \
+		$(imc_ipc-src) \
+		Makefile.temp
+	@rm -f Makefile.temp
+
+
+# IOSM IPC Debugfs files
+imc_ipc_debugfs-src =  \
+	 imc_ipc_debugfs.c \
+	 imc_ipc_debugfs_hpu_stress.c \
+	 imc_ipc_debugfs_mmio.c \
+	 imc_ipc_debugfs_mux.c \
+	 imc_ipc_debugfs_params.c \
+	 imc_ipc_debugfs_parc.c \
+	 imc_ipc_debugfs_ras_des.c \
+	 imc_ipc_debugfs_stats.c \
+	 imc_ipc_debugfs_uevent.c
+
+imc_ipc_debugfs-headers =  \
+	 imc_ipc_debugfs_hpu_stress.h \
+	 imc_ipc_debugfs_mmio.h \
+	 imc_ipc_debugfs_mux.h \
+	 imc_ipc_debugfs_params.h \
+	 imc_ipc_debugfs_parc.h \
+	 imc_ipc_debugfs_priv.h \
+	 imc_ipc_debugfs_ras_des.h \
+	 imc_ipc_debugfs_stats.h \
+	 imc_ipc_debugfs_uevent.h
+
+# IOSM IPC MMAP files
+imc_ipc_mmap-src =  \
+	 imc_ipc_mmap.c
+
+imc_ipc_mmap-headers =  \
+	 imc_ipc_mmap.h
+
+ifeq ($(DEBUG_BUILD), 1)
+imc_ipc-src += $(imc_ipc_debugfs-src) $(imc_ipc_mmap-src)
+imc_ipc-headers += $(imc_ipc_debugfs-headers) $(imc_ipc_mmap-headers)
+endif

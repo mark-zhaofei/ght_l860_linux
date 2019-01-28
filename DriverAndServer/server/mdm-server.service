@@ -1,0 +1,14 @@
+[Unit]
+Description=mdm-server install
+#After=network.target
+Before=network.target network.service
+[Service]
+Type=simple
+Environment=LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+User=root
+
+ExecStart=/lib/systemd/system/mdm-server
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
